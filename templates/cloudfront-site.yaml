@@ -40,7 +40,7 @@ Conditions:
     - !Ref CreateDns
     - 'yes'
   CreateApexDnsConfig:  !And
-    - !Condition CreateApexDnsConfig
+    - !Condition CreateApexConfig
     - !Condition CreateDnsConfig
     
 Resources:

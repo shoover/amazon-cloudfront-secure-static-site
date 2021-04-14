@@ -4,11 +4,6 @@ Description: ACFS3 - Certificate creation
 Parameters:
   DomainName:
     Type: String
-  Region:
-    Type: String
-    Default: 'us-east-1'
-  CFNCustomProvider:
-    Type: String
   CopyFunction:
     Type: String
   SubDomain:
@@ -43,7 +38,6 @@ Resources:
           - CreateApexConfig
           - - Ref: DomainName
           - Ref: AWS::NoValue
-      Region: !Ref Region
       ValidationMethod: DNS
       DomainValidationOptions:
         Fn::If:
