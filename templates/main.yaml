@@ -9,6 +9,7 @@ Metadata:
         Parameters:
           - SubDomain
           - DomainName
+          - HostedZoneId
 
 Mappings:
   Solution:
@@ -29,6 +30,15 @@ Parameters:
     Type: String
     Default: 'no'
     AllowedValues: ['yes','no']
+  CreateDns:
+    Description: Create Route53 DNS records - yes/no
+    Type: String
+    Default: 'no'
+    AllowedValues: ['yes','no']
+  HostedZoneId:
+    Description: Route53 hosted zone to use for domain validation
+    Type: String
+    Default: 'ZZZHHHHWWWWAAA'
 
 Resources:
   CustomResourceStack:
@@ -46,9 +56,10 @@ Resources:
       Parameters:
         SubDomain: !Ref SubDomain
         DomainName: !Ref DomainName
-        CFNCustomProvider: !GetAtt CustomResourceStack.Outputs.CFNCustomProvider
         CopyFunction: !GetAtt CustomResourceStack.Outputs.CopyFunction
         CreateApex: !Ref CreateApex
+        CreateDns: !Ref CreateDns
+        HostedZoneId: !Ref HostedZoneId
       Tags:
         - Key: Solution
           Value: ACFS3
@@ -62,6 +73,7 @@ Resources:
         DomainName: !Ref DomainName
         SubDomain: !Ref SubDomain
         CreateApex: !Ref CreateApex
+        CreateDns: !Ref CreateDns
         S3BucketRoot: !GetAtt CustomResourceStack.Outputs.S3BucketRoot
         S3BucketRootName: !GetAtt CustomResourceStack.Outputs.S3BucketRootName
         S3BucketRootArn: !GetAtt CustomResourceStack.Outputs.S3BucketRootArn
@@ -74,9 +86,6 @@ Resources:
 Outputs:
   SolutionVersion:
     Value: !FindInMap [Solution, Constants, Version]
-  CFNCustomProvider:
-    Description: ACM helper function    
-    Value: !GetAtt CustomResourceStack.Outputs.CFNCustomProvider
   CopyFunction:
     Description: S3 helper function    
     Value: !GetAtt CustomResourceStack.Outputs.CopyFunction

@@ -15,10 +15,17 @@ Parameters:
     Type: String
   CreateApex:
     Type: String
+  CreateDns:
+    Type: String
+  HostedZoneId:
+    Type: String
 
 Conditions:
   CreateApexConfig:  !Equals 
     - !Ref CreateApex
+    - 'yes'
+  CreateDnsConfig:  !Equals
+    - !Ref CreateDns
     - 'yes'
 
 Resources:
@@ -28,7 +35,7 @@ Resources:
       ServiceToken: !Ref CopyFunction
 
   Certificate:
-    Type: Custom::Certificate
+    Type: "AWS::CertificateManager::Certificate"
     Properties:
       DomainName: !Sub '${SubDomain}.${DomainName}'
       SubjectAlternativeNames:
@@ -38,60 +45,16 @@ Resources:
           - Ref: AWS::NoValue
       Region: !Ref Region
       ValidationMethod: DNS
-      ServiceToken: !Ref 'CFNCustomProvider'
-
-  IssuedCertificate:
-    Type: Custom::IssuedCertificate
-    Properties:
-      CertificateArn: !Ref Certificate
-      ServiceToken: !Ref 'CFNCustomProvider'
-
-  CertificateDNSRecord:
-    Type: Custom::CertificateDNSRecord
-    Properties:
-      CertificateArn: !Ref Certificate
-      DomainName: !Sub '${SubDomain}.${DomainName}'
-      ServiceToken: !Ref 'CFNCustomProvider'
-
-  apexCertificateDNSRecord:
-    Type: Custom::CertificateDNSRecord
-    Condition: CreateApexConfig
-    Properties:
-      CertificateArn: !Ref Certificate
-      DomainName: !Ref DomainName
-      ServiceToken: !Ref 'CFNCustomProvider'
-
-  DomainValidationRecord:
-    Type: AWS::Route53::RecordSetGroup
-    Properties:
-      HostedZoneName: !Sub '${DomainName}.'
-      RecordSets:
-        - Name: !GetAtt CertificateDNSRecord.Name
-          Type: !GetAtt CertificateDNSRecord.Type
-          TTL: 60
-          Weight: 1
-          SetIdentifier: !Ref Certificate
-          ResourceRecords:
-            - !GetAtt CertificateDNSRecord.Value
-
-  apexDomainValidationRecord:
-    Type: AWS::Route53::RecordSetGroup
-    Condition: CreateApexConfig
-    Properties:
-      HostedZoneName: !Sub '${DomainName}.'
-      RecordSets:
-        - Name: !GetAtt apexCertificateDNSRecord.Name
-          Type: !GetAtt apexCertificateDNSRecord.Type
-          TTL: 60
-          Weight: 1
-          SetIdentifier: !Ref Certificate
-          ResourceRecords:
-            - !GetAtt apexCertificateDNSRecord.Value
-
+      DomainValidationOptions:
+        Fn::If:
+          - CreateDnsConfig
+          - - DomainName: !Sub '${SubDomain}.${DomainName}'
+              HostedZoneId: !Ref HostedZoneId
+          - Ref: AWS::NoValue
 Outputs:
-  DNSRecord:
-    Description: DNS record
-    Value: !Sub '${CertificateDNSRecord.Name} ${CertificateDNSRecord.Type} ${CertificateDNSRecord.Value}'
+  # DNSRecord:
+  #   Description: DNS record
+  #   Value: !Sub '${CertificateDNSRecord.Name} ${CertificateDNSRecord.Type} ${CertificateDNSRecord.Value}'
 
   CertificateArn: 
     Description: Issued certificate

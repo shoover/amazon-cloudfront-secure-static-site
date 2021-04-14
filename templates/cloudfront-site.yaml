@@ -29,12 +29,20 @@ Parameters:
     Type: String
   CreateApex: 
     Type: String
-
+  CreateDns:
+    Type: String
+    
 Conditions:
   CreateApexConfig:  !Equals
     - !Ref CreateApex
     - 'yes'
-
+  CreateDnsConfig:  !Equals
+    - !Ref CreateDns
+    - 'yes'
+  CreateApexDnsConfig:  !And
+    - !Condition CreateApexDnsConfig
+    - !Condition CreateDnsConfig
+    
 Resources:
   S3BucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -146,6 +154,7 @@ Resources:
         Comment: !Sub 'CloudFront OAI for ${SubDomain}.${DomainName}'
         
   Route53RecordSetGroup:
+    Condition: CreateDnsConfig
     Type: AWS::Route53::RecordSetGroup
     Properties:
       HostedZoneName: !Sub '${DomainName}.'
@@ -159,7 +168,7 @@ Resources:
           HostedZoneId: 'Z2FDTNDATAQYW2'
 
   ApexRoute53RecordSetGroup:
-    Condition: CreateApexConfig
+    Condition: CreateApexDnsConfig
     Type: AWS::Route53::RecordSetGroup
     Properties:
       HostedZoneName: !Sub '${DomainName}.'
